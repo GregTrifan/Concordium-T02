@@ -1,14 +1,14 @@
 ## Contract deployment Txn
- * ```ae207cb1324144e31016b490a6529df65a2ee2611cb0ed9734c2ff1d22c5ab48```
+ * ```dd17d8d93ec84ddb9afef3180ff104f166e4d28decc346f0d37a7a54f8190b0d```
  * ![](img/deploy.png)
 ## Contract initialization Txn: 
- * ```16287125d6716af73231ac04f669d9f108772c4c60e00b6fdd613d674f90729d```
+ * ```dbcadd0845e863aeb24cc041cf652005081318b11048c20d9c5c020386b1e966```
  * ![](img/init-contract.png)
 ## Contract Update Txn
- * ```07ee7f0aacc9ebd1bd9b5b1bc775cb433f9f7dba75c0db9a6389ac24adb6408a```
+ * ```fc275ed061adcabd05aa755d4081fd89e53e6c7445fbf8aba49daf7a1d78df3e```
  * ![](img/update.png)
 ## Contract Invoke View
- * ![](img/invoke.png)
+ * ![](img/view.png)
 
 **Concordium Mainnet address:**
 ```2xBLr1bosK5NEQJTW9q1GHsmmuDgLrjAAzC8CSUBJc55AwVsw5```

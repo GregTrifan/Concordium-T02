@@ -6,8 +6,7 @@ use core::fmt::Debug;
 #[derive(Serialize, SchemaType, Clone)]
 pub struct State {
     // Your state
-    count:u64,
-    label: String
+    count:i64,
 }
 
 /// Your smart contract errors.
@@ -16,56 +15,56 @@ enum Error {
     /// Failed parsing the parameter.
     #[from(ParseError)]
     ParseParamsError,
-    /// Your error
-    YourError,
 }
 
 /// Init function that creates a new smart contract.
-#[init(contract = "concordium_t02")]
+#[init(contract = "t02_counter")]
 fn init<S: HasStateApi>(
     _ctx: &impl HasInitContext,
     _state_builder: &mut StateBuilder<S>,
 ) -> InitResult<State> {
-    // Your code
-
     Ok(State {
-        count:0,
-        label:"Hello World".to_string()
+        count:0
     })
 }
 
-/// Receive function. The input parameter is the boolean variable `throw_error`.
-///  If `throw_error == true`, the receive function will throw a custom error.
-///  If `throw_error == false`, the receive function executes successfully.
-#[receive(
-    contract = "concordium_t02",
-    name = "receive",
-    parameter = "bool",
-    error = "Error",
-    mutable
-)]
-fn receive<S: HasStateApi>(
-    ctx: &impl HasReceiveContext,
-    _host: &mut impl HasHost<State, StateApiType = S>,
-) -> Result<(), Error> {
-    // Your code
-
-    let throw_error = ctx.parameter_cursor().get()?; // Returns Error::ParseError on failure
-    if throw_error {
-        Err(Error::YourError)
-    } else {
-        Ok(())
-    }
-}
-
 /// View function that returns the content of the state.
-#[receive(contract = "concordium_t02", name = "view", return_value = "State")]
+#[receive(contract = "t02_counter", name = "view", return_value = "State")]
 fn view<'a, 'b, S: HasStateApi>(
     _ctx: &'a impl HasReceiveContext,
     host: &'b impl HasHost<State, StateApiType = S>,
 ) -> ReceiveResult<&'b State> {
     Ok(host.state())
 }
+
+// Increment function that increments the counter from the state
+#[receive(
+    contract = "t02_counter",
+    name = "increment",
+    mutable
+)]
+fn increment<S: HasStateApi>(
+    _ctx: &impl HasReceiveContext,
+    _host: &mut impl HasHost<State, StateApiType = S>,
+) -> Result<(), Error> {
+    _host.state_mut().count += 1;
+    Ok(())
+}
+
+// Decrement function that decrements the counter from the state
+#[receive(
+    contract = "t02_counter",
+    name = "decrement",
+    mutable
+)]
+fn decrement<S: HasStateApi>(
+    _ctx: &impl HasReceiveContext,
+    _host: &mut impl HasHost<State, StateApiType = S>,
+) -> Result<(), Error> {
+    _host.state_mut().count -= 1;
+    Ok(())
+}
+
 
 #[concordium_cfg_test]
 mod tests {
@@ -85,10 +84,9 @@ mod tests {
         state_result.expect_report("Contract initialization results in error");
     }
 
+    
     #[concordium_test]
-    /// Test that invoking the `receive` endpoint with the `false` parameter
-    /// succeeds in updating the contract.
-    fn test_throw_no_error() {
+    fn test_increment() {
         let ctx = TestInitContext::empty();
 
         let mut state_builder = TestStateBuilder::new();
@@ -96,25 +94,19 @@ mod tests {
         // Initializing state
         let initial_state = init(&ctx, &mut state_builder).expect("Initialization should pass");
 
-        let mut ctx = TestReceiveContext::empty();
-
-        let throw_error = false;
-        let parameter_bytes = to_bytes(&throw_error);
-        ctx.set_parameter(&parameter_bytes);
+        let ctx = TestReceiveContext::empty();
 
         let mut host = TestHost::new(initial_state, state_builder);
 
-        // Call the contract function.
-        let result: ContractResult<()> = receive(&ctx, &mut host);
 
-        // Check the result.
+        let result: ContractResult<()> = increment(&ctx, &mut host);
         claim!(result.is_ok(), "Results in rejection");
+        
+        claim_eq!(host.state().count,1,"Didn't increment count");
     }
 
     #[concordium_test]
-    /// Test that invoking the `receive` endpoint with the `true` parameter
-    /// results in the `YourError` being thrown.
-    fn test_throw_error() {
+    fn test_decrement() {
         let ctx = TestInitContext::empty();
 
         let mut state_builder = TestStateBuilder::new();
@@ -122,18 +114,13 @@ mod tests {
         // Initializing state
         let initial_state = init(&ctx, &mut state_builder).expect("Initialization should pass");
 
-        let mut ctx = TestReceiveContext::empty();
-
-        let throw_error = true;
-        let parameter_bytes = to_bytes(&throw_error);
-        ctx.set_parameter(&parameter_bytes);
+        let ctx = TestReceiveContext::empty();
 
         let mut host = TestHost::new(initial_state, state_builder);
 
-        // Call the contract function.
-        let error: ContractResult<()> = receive(&ctx, &mut host);
 
-        // Check the result.
-        claim_eq!(error, Err(Error::YourError), "Function should throw an error.");
+        let result: ContractResult<()> = decrement(&ctx, &mut host);
+        claim!(result.is_ok(), "Results in rejection");
+        claim_eq!(host.state().count,-1,"Didn't decrement count");
     }
 }
