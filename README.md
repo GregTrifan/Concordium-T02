@@ -9,3 +9,6 @@
  * ![](img/update.png)
 ## Contract Invoke View
  * ![](img/invoke.png)
+
+**Concordium Mainnet address:**
+```2xBLr1bosK5NEQJTW9q1GHsmmuDgLrjAAzC8CSUBJc55AwVsw5```
